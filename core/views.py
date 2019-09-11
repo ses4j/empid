@@ -14,91 +14,8 @@ from django.shortcuts import redirect
 
 from lazysignup.decorators import allow_lazy_user
 
-from .get_pic import get_image_urls
-
 from . import models as cm
-
-
-# global image_urls
-# image_urls = {}
-
-
-# served_birds = {}
-
-
-# def get_image(birdname):
-#     global image_urls
-
-#     try:
-#         bird_urls = image_urls[birdname]
-#     except KeyError:
-#         bird_urls = image_urls[birdname] = get_image_urls(species="", taxonCode=birdname)
-
-#     try:
-#         return bird_urls.pop()
-#     except ValueError:
-#         bird_urls = image_urls[birdname] = get_image_urls(species="", taxonCode=birdname)
-#         return bird_urls.pop()
-
-
-def _seed_database(group_data):
-    print("Purging and reseeding bird database...")
-    cm.Bird.objects.filter(group=group_data["code"]).delete()
-
-    data = []
-    for choice in group_data["choices"]:
-        data += get_image_urls(species="", taxonCode=choice["taxonCode"])
-
-    random.shuffle(data)
-
-    def parse_date(obsdttm):
-        # 6 sep 2019
-        return datetime.datetime.strptime(obsdttm, "%d %b %Y").date()
-
-    max_id = 0
-    for bird_data in data:
-        max_id += 1
-        new_bird = cm.Bird.objects.create(
-            asset_id=bird_data["assetId"],
-            # ebird_image_data=bird_data,
-            group=group_data["code"],
-            species_code=bird_data["speciesCode"],
-            seq=max_id,
-            common_name=bird_data["commonName"],
-            image_url=bird_data["largeUrl"],
-            location_line1=bird_data["locationLine1"],
-            location_line2=bird_data["locationLine2"],
-            observation_date=parse_date(bird_data["obsDttm"]),  # "22 Jun 2019",
-            ebird_user_id=bird_data["userId"],
-            ebird_rating=bird_data["rating"],
-            ebird_user_display_name=bird_data["userDisplayName"],
-            ebird_checklist_id=bird_data["eBirdChecklistId"],
-            image_width=bird_data["width"],
-            image_height=bird_data["height"],
-            is_active=True,
-        )
-
-
-groups = {
-    "EE": {
-        "code": "EE",
-        "name": "Eastern Empids",
-        "choices": [
-            {"name": "Alder Flycatcher", "taxonCode": "aldfly"},
-            {"name": "Willow Flycatcher", "taxonCode": "wilfly"},
-            {"name": "Least Flycatcher", "taxonCode": "leafly"},
-            {"name": "Yellow-bellied Flycatcher", "taxonCode": "yebfly"},
-            {"name": "Acadian Flycatcher", "taxonCode": "acafly"},
-            {"name": "Eastern Wood-Pewee", "taxonCode": "eawpew"},
-            # {'name': "Eastern Phoebe", "taxonCode": ""},
-        ],
-    }
-}
-confidences = [
-    {"name": "Low", "abbrev": "L", "value": 1},
-    {"name": "Medium", "abbrev": "M", "value": 5},
-    {"name": "High", "abbrev": "H", "value": 10},
-]
+from . import constants as cc
 
 
 def get_image(group, last_index):
@@ -113,17 +30,6 @@ def get_image(group, last_index):
         return next_bird
 
     raise RuntimeError("no more birds.")
-    # # populate some more...
-    # first_new_bird = None
-    # data = get_image_urls(species="", taxonCode=species_code)
-    # max_id = cm.Bird.objects.filter(species_code=species_code).count()
-    # for bird_data in data:
-    #     max_id += 1
-
-    #     if not first_new_bird:
-    #         first_new_bird = new_bird
-
-    # return first_new_bird
 
 
 @allow_lazy_user
@@ -144,7 +50,7 @@ def index(request):
 
     template = loader.get_template("core/index.html")
 
-    context = {"groups": groups}
+    context = {"groups": cc.GROUPS}
 
     return HttpResponse(template.render(context, request))
 
@@ -201,8 +107,8 @@ def identify(request, group_code, bird_seq=None):
         + bird_to_guess.location_line2,
         "observation_date": bird_to_guess.observation_date.isoformat(),
         "photo_by": bird_to_guess.ebird_user_display_name,
-        "group": groups[group_code],
-        "confidences": confidences,
+        "group": cc.GROUPS[group_code],
+        "confidences": cc.CONFIDENCES,
         "bird_stats": bird_stats,
         "user_stats": user_stats,
     }

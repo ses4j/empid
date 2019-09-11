@@ -1,0 +1,260 @@
+{% load static %}
+{% load i18n lazysignup_tags %}
+<!doctype html>
+<html lang="en">
+
+<head>
+	<!-- Required meta tags -->
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+	<!-- Bootstrap CSS -->
+	<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
+		integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+
+	<title>EmpID</title>
+
+	<style>
+		.container {
+			margin-top: 100px;
+		}
+
+		#bird-img,
+		#caption {
+			margin: 10px;
+		}
+	</style>
+</head>
+
+<body>
+	<nav class="navbar navbar-expand-md navbar-dark bg-dark fixed-top">
+		<a class="navbar-brand" href="#">EmpID</a>
+		<button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarsExampleDefault"
+			aria-controls="navbarsExampleDefault" aria-expanded="false" aria-label="Toggle navigation">
+			<span class="navbar-toggler-icon"></span>
+		</button>
+
+		<div class="collapse navbar-collapse" id="navbarsExampleDefault">
+			<ul class="navbar-nav mr-auto">
+				<li class="nav-item active">
+					<!-- <a class="nav-link" href="#">IDentify <span class="sr-only">(current)</span></a> -->
+					<span class="navbar-text">
+						<b>{{ group.name }}</b>
+					</span>
+				</li>
+				<li class="nav-item">
+					<a class="nav-link" href="/account">Account</a>
+				</li>
+				{% if not user|is_lazy_user %}
+				<li class="nav-item">
+					<a class="nav-link" href="{% url 'auth_logout' %}">Log out</a>
+				</li>
+				{% else %}
+				<li class="nav-item">
+					<a class="nav-link" href="/convert">Create Account (to save your stats, can do anytime)</a>
+				</li>
+				{% endif %}
+			</ul>
+
+			<span class="navbar-text">
+				<span>{{ user_stats.my_correct_guesses }} of {{ user_stats.my_count }} Identifications Correct</span>. Current
+				Score: <span id='score'>{{ user_stats.my_score }}</span>
+			</span>
+		</div>
+	</nav>
+
+	<main role="main" class="container">
+		<div class="row">
+			<div class="col text-center">
+				<img id="bird-img" width="50%" src="{{ image_url }}" class="rounded mx-auto d-block"
+					style="object-fit: contain; max-height: 400px; max-width: 400px;" alt="Some kind of bird">
+			</div>
+		</div>
+		<div class="row">
+			<div class="col text-center">
+				<div id="caption">{{ location }} on {{ observation_date }} <small>(photo by {{ photo_by }})</small>.
+				</div>
+
+				<div id="species-guesser" class="not---btn-group" role="group">
+					{% for choice in group.choices %}
+					<button type="button" class="btn btn-secondary" id="choice-{{ forloop.counter }}"
+						data-species-code="{{ choice.taxonCode }}">{{ forloop.counter }}: {{ choice.name }}</button>
+					{% endfor %}
+				</div>
+				<div id="confidence" class="not---btn-group" role="group" style="margin: 10px">
+					{% for choice in confidences %}
+					<button type="button" class="btn btn-secondary" id="confidence-{{ choice.abbrev }}"
+						data-value="{{ choice.value }}">{{choice.abbrev}}: {{ choice.name }}</button>
+					{% endfor %}
+				</div>
+				<div>
+					<label class="sr-only" for="inlineFormInputName2">Name</label>
+					<input type="text" class="form-control mb-2 mr-sm-2" id="inlineFormInputName2"
+						placeholder="Enter any ID comments or disagreements here for review by the admins.">
+				</div>
+				<div>
+					<button type="button" class="btn btn-secondary showAfter" id="next-btn">N: Go to Next Bird</button>
+				</div>
+				<div>
+					<a href='#' id="ebirdChecklistLink" target="_blank" class="showAfter">View eBird checklist</a>
+				</div>
+			</div>
+		</div>
+
+	</main><!-- /.container -->
+
+
+	<!-- Optional JavaScript -->
+	<!-- jQuery first, then Popper.js, then Bootstrap JS -->
+	<script src="https://code.jquery.com/jquery-3.4.1.min.js"
+		integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+
+	<script src="https://cdn.jsdelivr.net/npm/jquery.hotkeys@0.1.0/jquery.hotkeys.min.js"></script>
+
+	<script>
+		let bird_id = {{ bird_id }};
+
+		function resetScreen() {
+			$('.showAfter').hide();
+			let guessingButtons = $('#species-guesser > button');
+			guessingButtons.removeClass('btn-success');
+			guessingButtons.removeClass('btn-danger');
+			$('#species-guesser').prop('disabled', false);
+			$('#confidence').prop('disabled', false);
+		}
+
+		function get_data() {
+			let speciesGuess = $('#species-guesser > .active');
+			if (!speciesGuess.length)
+				return null;
+			let confidenceBtn = $('#confidence > .active');
+			if (!confidenceBtn.length)
+				return null;
+
+			let taxonCode = $(speciesGuess).data('species-code');
+			let confidence = parseInt($(confidenceBtn).data('value'));
+
+			let data = {
+				bird_id: bird_id,
+				guess: taxonCode,
+				confidence: confidence,
+			};
+
+			return data;
+		}
+
+		resetScreen();
+		$('#next-btn').click(function () {
+
+			location.reload(true);
+		});
+		$('#species-guesser > button').click(function (e) {
+			let self = this;
+
+			$('#species-guesser > button').removeClass('active');
+			$(this).addClass('active');
+			submit_guess();
+			return false;
+		});
+
+		$('#confidence > button').click(function (e) {
+			let self = this;
+
+			$('#confidence > button').removeClass('active');
+			$(this).addClass('active');
+			submit_guess();
+			return false;
+		});
+
+		function deactivate_bird() {
+			let data = {
+				bird_id: bird_id,
+			};
+
+			$.ajax({
+				type: "POST",
+				url: '/api/deactivate',
+				data: data,
+				success: function () {
+					location.reload(true);
+				}
+			});
+		}
+
+		function submit_guess() {
+			$(this).parent().children().prop('disabled', true);
+
+			let data = get_data();
+			if (!data)
+				return;
+
+			$.ajax({
+				type: "POST",
+				url: '/api/guess',
+				data: data,
+				success: function (result, textStatus, xhr) {
+					console.log(result);
+					let is_correct = result.is_correct;
+					let correct_answer = result.correct_answer;
+					let stats = result.stats;
+
+					let guess = data.guess;
+					// let confidence_guess = data.confidence;
+					let guessButton = $('#species-guesser > button[data-species-code="' + guess + '"]');
+					let correctButton = $('#species-guesser > button[data-species-code="' + correct_answer + '"]');
+
+					if (is_correct) {
+						guessButton.addClass('btn-success');
+						// $("#choice-" + correct_answer).addClass('btn-success');
+					} else {
+						guessButton.addClass('btn-danger');
+						correctButton.addClass('btn-success');
+					}
+
+					$('.showAfter').show();
+					$('#ebirdChecklistLink').attr('href', result.ebird_checklist_url);
+					$('#score').text(user_stats.my_score);
+				},
+				error: function (xhr, status, errorthrown) {
+					console.log(xhr, status, errorthrown);
+					alert('backend error');
+				},
+				dataType: 'json'
+			});
+		}
+
+		$.each(["1", "2", "3", "4", "5", "6"], function (i, e) { // i is element index. e is element as text.
+			$(document).bind('keydown', e, function () {
+				$('#choice-' + e).click();
+				return false;
+			});
+		});
+		$.each(["L", "M", "H"], function (i, e) { // i is element index. e is element as text.
+			$(document).bind('keydown', e, function () {
+				$('#confidence-' + e).click();
+				return false;
+			});
+		});
+
+		$(document).bind('keydown', 'N', function () {
+			$('#next-btn').click();
+			return false;
+		});
+
+		$(document).bind('keydown', 'F', function () {
+			deactivate_bird();
+			return false;
+		});
+
+	</script>
+
+
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"
+		integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1"
+		crossorigin="anonymous"></script>
+	<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"
+		integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM"
+		crossorigin="anonymous"></script>
+</body>
+
+</html>

@@ -16,7 +16,7 @@ class Bird(models.Model):
     # ebird_image_data = JSONField()
 
     species_code = models.CharField(max_length=6)
-    group = models.CharField(max_length=1, choices=GROUPS)
+    group = models.CharField(max_length=6, choices=GROUPS)
     seq = models.PositiveIntegerField(unique=True, db_index=True)
 
     common_name = models.CharField(max_length=200)

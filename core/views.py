@@ -90,9 +90,8 @@ def identify(request, group_code, bird_seq=None):
         .values_list("seq", flat=True)
         .first()
     )
-    # last_seq = cm.Guess.objects.filter(user=user).order_by('-bird__species_seq').values_list('bird__species_seq', flat=True).first()
     if bird_seq is None:
-        bird_seq = last_seq + 1
+        bird_seq = (last_seq if last_seq else 0) + 1
     bird_to_guess = get_image(group_code, bird_seq)
     # served_birds[bird_to_guess['assetId']] = bird_to_guess
     bird_stats = get_bird_stats(bird_to_guess)
@@ -113,11 +112,11 @@ def identify(request, group_code, bird_seq=None):
         "user_stats": user_stats,
     }
 
-    import pprint
+    # import pprint
 
-    pprint.pprint(bird_to_guess.__dict__)
-    pprint.pprint(bird_stats)
-    pprint.pprint(user_stats)
+    # pprint.pprint(bird_to_guess.__dict__)
+    # pprint.pprint(bird_stats)
+    # pprint.pprint(user_stats)
 
     return HttpResponse(template.render(context, request))
 

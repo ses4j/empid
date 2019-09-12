@@ -58,12 +58,6 @@
                 </li>
                 {% endif %}
             </ul>
-
-            <span class="navbar-text">
-                <span>{{ user_stats.my_correct_guesses }} of {{ user_stats.my_count }} Identifications Correct</span>.
-                Current
-                Score: <span id='score'>{{ user_stats.my_score }}</span>
-            </span>
         </div>
     </nav>
 
@@ -80,7 +74,7 @@
                         <tr>
                             <th scope="col">Username</th>
                             <th scope="col">Total Score</th>
-                            <th scope="col">Guesses</th>
+                            <th scope="col">Correct Guesses</th>
                             <th scope="col">Average Confidence</th>
                         </tr>
                     </thead>

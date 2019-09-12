@@ -124,6 +124,59 @@ def identify(request, group_code, bird_seq=None):
     return HttpResponse(template.render(context, request))
 
 
+def _score_guess(g):
+    if g.is_correct:
+        return g.confidence
+    else:
+        return -g.confidence
+
+
+@allow_lazy_user
+def leaderboard(request):
+    # latest_question_list = Question.objects.order_by('-pub_date')[:5]
+    # _seed_database(groups['EE'])
+
+    user = request.user
+    assert user is not None
+
+    template = loader.get_template("core/leaderboard.html")
+
+    gs = cm.Guess.objects.all()
+    scores = collections.defaultdict(int)
+    confidences = collections.defaultdict(int)
+    total = collections.defaultdict(int)
+    correct = collections.defaultdict(int)
+
+    for g in gs:
+        scores[g.user_id] += _score_guess(g)
+        confidences[g.user_id] += g.confidence
+        total[g.user_id] += 1
+        correct[g.user_id] += 1 if g.is_correct else 0
+
+    leader_data = list(sorted(scores.items(), key=lambda x: -x[1])[:20])
+    leader_users = cm.User.objects.filter(id__in=[_[0] for _ in leader_data]).values(
+        "id", "username"
+    )
+    leader_users = {_["id"]: _["username"] for _ in leader_users}
+
+    leaderboard = []
+    for user_id, score in leader_data:
+        leaderboard.append(
+            {
+                "score": score,
+                "user_id": user_id,
+                "username": leader_users[user_id],
+                "total": total[user_id],
+                "correct": correct[user_id],
+                "avg_confidence": round(float(confidences[user_id]) / float(total[user_id]), 1)
+            }
+        )
+
+    print(leaderboard)
+    context = {"leaderboard": leaderboard}
+    return HttpResponse(template.render(context, request))
+
+
 def get_user_stats(user):
     my_guesses = cm.Guess.objects.filter(user=user)
 
@@ -131,12 +184,7 @@ def get_user_stats(user):
 
     score = 0
     for g in my_guesses:
-        if g.is_correct:
-            score += g.confidence
-        else:
-            score -= g.confidence
-
-    # my_score = my_guesses.filter(is_correct=True).count()
+        score += _score_guess(g)
 
     ret = {
         "my_count": my_guesses.count(),
@@ -166,7 +214,7 @@ def api_guess(request):
     bird_id = request.POST.get("bird_id")
     guess = request.POST.get("guess")
     confidence = request.POST.get("confidence")
-    comments = request.POST.get("comments", '')
+    comments = request.POST.get("comments", "")
 
     b = cm.Bird.objects.get(id=bird_id)
 
@@ -214,7 +262,7 @@ def api_deactivate(request):
 @csrf_exempt
 def api_comment(request):
     bird_id = request.POST.get("bird_id")
-    comments = request.POST.get("comments", '')
+    comments = request.POST.get("comments", "")
 
     g = cm.Guess.objects.get(bird_id=bird_id, user=request.user)
     g.comments = comments

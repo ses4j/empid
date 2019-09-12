@@ -10,6 +10,7 @@ urlpatterns = [
     path('api/comment', views.api_comment, name='api-comment'),
     path('api/deactivate', views.api_deactivate, name='api-deactivate'),
     path('account/', views.account, name='account'),
+    path('leaderboard/', views.leaderboard, name='leaderboard'),
     path('logout/', views.logout_view, name='auth_logout'),
 
 ]

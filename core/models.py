@@ -9,7 +9,7 @@ class Bird(models.Model):
     GROUPS = ( ('EE', 'Eastern Empids'),)
 
     class Meta:
-        unique_together = ('group', 'seq')
+        unique_together = (('group', 'seq'), )
 
     asset_id = models.IntegerField(unique=True, db_index=True)
 
@@ -38,13 +38,18 @@ class Bird(models.Model):
     deactivated_on = models.DateTimeField(null=True, blank=True)
     deactivated_by = models.ForeignKey('core.User', on_delete=models.CASCADE, null=True, blank=True)
 
+    def __str__(self):
+        return f"{self.group}#{self.seq} ({self.asset_id}, {self.species_code})"
 
 class User(AbstractUser):
     pass
 
 
 class Guess(models.Model):
-    bird = models.ForeignKey(Bird, on_delete=models.CASCADE)
+    class Meta:
+        unique_together = (('bird', 'user'), )
+
+    bird = models.ForeignKey(Bird, on_delete=models.CASCADE, db_index=False)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
 
     species_code = models.CharField(max_length=6, help_text="Guessed species code.")
@@ -53,3 +58,8 @@ class Guess(models.Model):
     is_correct = models.BooleanField()
 
     created = models.DateTimeField(auto_now_add=True)
+
+    comments = models.TextField()
+
+    def __str__(self):
+        return f"[{self.user}] For {self.bird}, guessed {self.species_code} with conf {self.confidence}: {self.comments}"

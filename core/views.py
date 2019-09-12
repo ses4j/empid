@@ -1,4 +1,5 @@
 import datetime
+import logging
 import random
 import collections
 
@@ -16,6 +17,8 @@ from lazysignup.decorators import allow_lazy_user
 
 from . import models as cm
 from . import constants as cc
+
+logger = logging.getLogger(__name__)
 
 
 def get_image(group, last_index):
@@ -91,7 +94,7 @@ def identify(request, group_code, bird_seq=None):
         .first()
     )
     if bird_seq is None:
-        bird_seq = (last_seq if last_seq else 0) + 1
+        bird_seq = last_seq if last_seq else 0
     bird_to_guess = get_image(group_code, bird_seq)
     # served_birds[bird_to_guess['assetId']] = bird_to_guess
     bird_stats = get_bird_stats(bird_to_guess)
@@ -140,8 +143,8 @@ def get_user_stats(user):
         "my_correct_guesses": my_correct_guesses,
         "my_score": score,
     }
-    print("stats")
-    print(ret)
+    # print("stats")
+    # print(ret)
     return ret
 
 
@@ -153,8 +156,8 @@ def get_bird_stats(bird):
     count = cm.Guess.objects.filter(bird=bird).count()
 
     ret = {"bird_count": count, "guessed_species": guessed_species}
-    print("stats")
-    print(ret)
+    # print("stats")
+    # print(ret)
     return ret
 
 
@@ -163,6 +166,7 @@ def api_guess(request):
     bird_id = request.POST.get("bird_id")
     guess = request.POST.get("guess")
     confidence = request.POST.get("confidence")
+    comments = request.POST.get("comments", '')
 
     b = cm.Bird.objects.get(id=bird_id)
 
@@ -172,13 +176,16 @@ def api_guess(request):
     #     raise RuntimeError("bad bird id")
 
     is_correct = b.species_code == guess
-    cm.Guess.objects.create(
+    g = cm.Guess.objects.create(
         bird=b,
         user=request.user,
         species_code=guess,
         confidence=confidence,
         is_correct=is_correct,
+        comments=comments,
     )
+
+    logger.info(f"Added guess: {g}")
 
     return JsonResponse(
         {
@@ -200,6 +207,19 @@ def api_deactivate(request):
     b.deactivated_on = timezone.now()
     b.deactivated_by = request.user
     b.save()
+
+    return JsonResponse({})
+
+
+@csrf_exempt
+def api_comment(request):
+    bird_id = request.POST.get("bird_id")
+    comments = request.POST.get("comments", '')
+
+    g = cm.Guess.objects.get(bird_id=bird_id, user=request.user)
+    g.comments = comments
+    logger.info(f"Added comment: {g}")
+    g.save()
 
     return JsonResponse({})
 

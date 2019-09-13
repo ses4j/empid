@@ -15,8 +15,8 @@
 	<title>EmpID</title>
 
 	<style>
-		.container {
-			margin-top: 100px;
+		main {
+			margin-top: 60px;
 		}
 
 		#bird-img,
@@ -66,11 +66,11 @@
 		</div>
 	</nav>
 
-	<main role="main" class="container">
+	<main role="main" class="container" style='padding-top: 15px'>
 		<div class="row">
 			<div class="col text-center">
-				<img id="bird-img" width="50%" src="{{ image_url }}" class="rounded mx-auto d-block"
-					style="object-fit: contain; max-height: 400px; max-width: 400px;" alt="Some kind of bird">
+				<img id="bird-img" src="{{ image_url }}" class="img-fluid rounded mx-auto d-block img-thumbnail"
+					style="max-height: 400px;" alt="Some kind of bird">
 			</div>
 		</div>
 		<div class="row">
@@ -80,23 +80,23 @@
 
 				<div id="species-guesser" class="not---btn-group" role="group">
 					{% for choice in group.choices %}
-					<button type="button" class="btn btn-secondary" id="choice-{{ forloop.counter }}"
+					<button type="button" class="btn btn-outline-secondary" id="choice-{{ forloop.counter }}"
 						data-species-code="{{ choice.taxonCode }}">{{ forloop.counter }}: {{ choice.name }}</button>
 					{% endfor %}
 				</div>
 				<div id="confidence" class="not---btn-group" role="group" style="margin: 10px">
 					{% for choice in confidences %}
-					<button type="button" class="btn btn-secondary" id="confidence-{{ choice.abbrev }}"
+					<button type="button" class="btn btn-outline-secondary" id="confidence-{{ choice.abbrev }}"
 						data-value="{{ choice.value }}">{{choice.abbrev}}: {{ choice.name }}</button>
 					{% endfor %}
 				</div>
 				<div>
 					<label class="sr-only" for="comments">Name</label>
 					<input type="text" class="form-control mb-2 mr-sm-2" id="comments"
-						placeholder="Enter any ID comments or disagreements here for review by the admins.">
+						placeholder="Enter any ID comments or disagreements here.">
 				</div>
 				<div>
-					<button type="button" class="btn btn-secondary showAfter" id="next-btn">N: Go to Next Bird</button>
+					<button type="button" class="btn btn-outline-secondary showAfter" id="next-btn">N: Go to Next Bird</button>
 				</div>
 				<div>
 					<a href='#' id="ebirdChecklistLink" target="_blank" class="showAfter">View eBird checklist</a>
@@ -227,10 +227,13 @@
 
 					if (is_correct) {
 						guessButton.addClass('btn-success');
+						guessButton.removeClass('btn-outline-secondary');
 						// $("#choice-" + correct_answer).addClass('btn-success');
 					} else {
 						guessButton.addClass('btn-danger');
 						correctButton.addClass('btn-success');
+						guessButton.removeClass('btn-outline-secondary');
+						correctButton.removeClass('btn-outline-secondary');
 					}
 
 					$('.showAfter').show();

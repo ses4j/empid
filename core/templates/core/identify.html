@@ -59,14 +59,18 @@
 				{% endif %}
 			</ul>
 
-			<span class="navbar-text">
-				<span>{{ user_stats.my_correct_guesses }} of {{ user_stats.my_count }} Identifications Correct</span>. Current
-				Score: <span id='score'>{{ user_stats.my_score }}</span>
-			</span>
 		</div>
 	</nav>
 
 	<main role="main" class="container" style='padding-top: 15px'>
+		<div class="row">
+			<div class="col text-center">
+					<span><span id='my_correct_guesses'>{{ user_stats.my_correct_guesses }}</span> of <span id='my_count'>{{ user_stats.my_count }}</span> Correct</span>.
+					Current
+					Score: <span id='my_score'>{{ user_stats.my_score }}</span>
+	
+			</div>
+		</div>
 		<div class="row">
 			<div class="col text-center">
 				<img id="bird-img" src="{{ image_url }}" class="img-fluid rounded mx-auto d-block img-thumbnail"
@@ -96,7 +100,8 @@
 						placeholder="Enter any ID comments or disagreements here.">
 				</div>
 				<div>
-					<button type="button" class="btn btn-outline-secondary showAfter" id="next-btn">N: Go to Next Bird</button>
+					<button type="button" class="btn btn-outline-secondary showAfter" id="next-btn">N: Go to Next
+						Bird</button>
 				</div>
 				<div>
 					<a href='#' id="ebirdChecklistLink" target="_blank" class="showAfter">View eBird checklist</a>
@@ -111,6 +116,7 @@
 	<!-- jQuery first, then Popper.js, then Bootstrap JS -->
 	<script src="https://code.jquery.com/jquery-3.4.1.min.js"
 		integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+	<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
 
 	<script src="https://cdn.jsdelivr.net/npm/jquery.hotkeys@0.1.0/jquery.hotkeys.min.js"></script>
 
@@ -204,11 +210,12 @@
 		}
 
 		function submit_guess() {
-			$(this).parent().children().prop('disabled', true);
-
 			let data = get_data();
 			if (!data)
 				return;
+
+			$('#species-guesser').children().prop('disabled', true);
+			$('#confidence').children().prop('disabled', true);
 
 			$.ajax({
 				type: "POST",
@@ -218,7 +225,7 @@
 					console.log(result);
 					let is_correct = result.is_correct;
 					let correct_answer = result.correct_answer;
-					let stats = result.stats;
+					let user_stats = result.user_stats;
 
 					let guess = data.guess;
 					// let confidence_guess = data.confidence;
@@ -236,12 +243,22 @@
 						correctButton.removeClass('btn-outline-secondary');
 					}
 
+					flashColor = is_correct ? 'rgba(0, 255, 0, 1)' : 'rgba(255, 0, 0, 1)';
+
 					$('.showAfter').show();
 					$('#ebirdChecklistLink').attr('href', result.ebird_checklist_url);
-					$('#score').text(user_stats.my_score);
+					$('#my_score').text(user_stats.my_score);
+					$('#my_correct_guesses').text(user_stats.my_correct_guesses);
+					$('#my_count').text(user_stats.my_count);
+					$('#my_score').animate({
+						color: flashColor,
+					}, 400).delay(400).animate({ color: 'black' }, 400);
 				},
 				error: function (xhr, status, errorthrown) {
 					console.log(xhr, status, errorthrown);
+					$('#species-guesser').children().prop('disabled', false);
+					$('#confidence').children().prop('disabled', false);
+
 					alert('backend error');
 				},
 				dataType: 'json'

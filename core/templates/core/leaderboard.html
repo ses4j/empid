@@ -15,6 +15,7 @@
                     <th scope="col">Total Score</th>
                     <th scope="col">Correct Guesses</th>
                     <th scope="col">Average Confidence</th>
+                    <th scope="col">Last Guess On</th>
                 </tr>
             </thead>
             <tbody>
@@ -24,10 +25,15 @@
                     <td>{{ leader.score }}</td>
                     <td>{{ leader.correct }} of {{ leader.total }}</td>
                     <td>{{ leader.avg_confidence }}</td>
+                    <td>{{ leader.last_guess_on }}</td>
                 </tr>
                 {% endfor %}
             </tbody>
         </table>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_scripts %}
+
 {% endblock %}

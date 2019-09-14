@@ -130,7 +130,7 @@ def _score_guess(g):
     else:
         return -g.confidence
 
-
+from django.utils.timezone import make_aware
 @allow_lazy_user
 def leaderboard(request):
     # latest_question_list = Question.objects.order_by('-pub_date')[:5]
@@ -146,12 +146,14 @@ def leaderboard(request):
     confidences = collections.defaultdict(int)
     total = collections.defaultdict(int)
     correct = collections.defaultdict(int)
+    last_guess_on = {}
 
     for g in gs:
         scores[g.user_id] += _score_guess(g)
         confidences[g.user_id] += g.confidence
         total[g.user_id] += 1
         correct[g.user_id] += 1 if g.is_correct else 0
+        last_guess_on[g.user_id] = max(g.created, last_guess_on.get(g.user_id, make_aware(datetime.datetime(2000, 1, 1))))
 
     leader_data = list(sorted(scores.items(), key=lambda x: -x[1])[:20])
     leader_users = cm.User.objects.filter(id__in=[_[0] for _ in leader_data]).values(
@@ -168,7 +170,8 @@ def leaderboard(request):
                 "username": leader_users[user_id],
                 "total": total[user_id],
                 "correct": correct[user_id],
-                "avg_confidence": round(float(confidences[user_id]) / float(total[user_id]), 1)
+                "avg_confidence": round(float(confidences[user_id]) / float(total[user_id]), 1),
+                "last_guess_on": last_guess_on[user_id], #.isoformat(),
             }
         )
 

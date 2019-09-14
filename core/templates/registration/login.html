@@ -1,0 +1,57 @@
+{% extends "core/base.html" %}
+
+{% block content %}
+<div class="row">
+    <div class="col">
+        <h1>Login</h1>
+        <p>Please be aware that if you login to an existing account, you will lose any identifications you just made.
+            But, if you <a href="/convert?redirect_to=/EE/identify">create a new account</a>, your current
+            identifications will be added to that account.</p>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col">
+
+        {% if form.errors %}
+        <p>Your username and password didn't match. Please try again.</p>
+        {% endif %}
+
+        {% if next %}
+        {% if user.is_authenticated %}
+        <p>Your account doesn't have access to this page. To proceed,
+            please login with an account that has access.</p>
+        {% else %}
+        <p>Please login to see this page.</p>
+        {% endif %}
+        {% endif %}
+
+        <form method="post" action="{% url 'login' %}">
+            {% csrf_token %}
+            <table>
+                <tr>
+                    <td>{{ form.username.label_tag }}</td>
+                    <td>{{ form.username }}</td>
+                </tr>
+                <tr>
+                    <td>{{ form.password.label_tag }}</td>
+                    <td>{{ form.password }}</td>
+                </tr>
+            </table>
+
+            <input type="submit" value="Login">
+            <input type="hidden" name="next" value="{{ next }}">
+        </form>
+
+        {# Assumes you setup the password_reset view in your URLconf #}
+
+        <p style='margin-top: 10px'><a href="/convert?redirect_to=/EE/identify">Create New Account (any identifications
+                you've
+                already made will
+                be
+                kept)</a></p>
+        <!-- <p><a href="{% url 'password_reset' %}">Lost password?</a></p> -->
+    </div>
+</div>
+
+{% endblock %}

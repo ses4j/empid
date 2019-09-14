@@ -1,0 +1,24 @@
+{% extends "core/base.html" %}
+{% load static %}
+{% load i18n lazysignup_tags %}
+
+{% block content %}
+<div class="row">
+    <div class="col">
+        <h1>Create new Account</h1>
+        <p>Any existing guesses will be saved into the new account.</p>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col">
+        <form method="post" action="{% url 'lazysignup_convert' %}">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <input type="hidden" name="redirect_to" value="/EE/identify">
+            <input type="submit" value="{% trans "Submit" %}" />
+        </form>
+    </div>
+</div>
+
+{% endblock %}

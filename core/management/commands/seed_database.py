@@ -54,7 +54,7 @@ def _seed_database(group_data):
     print("Purging and reseeding bird database...")
     data = []
     for choice in group_data["choices"]:
-        data += get_image_urls(species="", taxonCode=choice["taxonCode"], **choice.get('media_filter_params', {}))
+        data += get_image_urls(species="", taxonCode=choice["taxonCode"], **group_data.get('media_filter_params', {}))
 
     random.shuffle(data)
 

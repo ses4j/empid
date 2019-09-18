@@ -5,7 +5,6 @@ logger = logging.getLogger(__name__)
 
 def get_image_urls(species, taxonCode='', count=50, sort_by="rating_rank_desc", regionCode='', mr='MCUSTOM', bmo=1, emo=12, yr='YPAST10'):
     # taxonCode = "aldfly"
-
     # https://ebird.org/media/catalog.json?searchField=user&
     # q=&taxonCode=&hotspotCode=&regionCode=US&customRegionCode=&userId=&_mediaType=&mediaType=p&species=&
     # region=United+States+(US)&hotspot=&customRegion=&mr=M8TO11&bmo=1&emo=12&yr=YALL&by=1900&ey=2019&user=&

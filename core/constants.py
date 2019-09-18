@@ -1,7 +1,32 @@
 GROUPS = {
+    "FW": {
+        "code": "FW",
+        "name": "Confusing Fall Warblers (Eastern)",
+        "media_filter_params": {
+            "bmo": 8,
+            "emo": 10,
+        },
+        "choices": [
+            {"name": "Pine Warbler", "taxonCode": "pinwar"},
+            {"name": "Bay-breasted Warbler", "taxonCode": "babwar"},
+            {"name": "Tennessee Warbler", "taxonCode": "tenwar"},
+            {"name": "Orange-Crowned Warbler", "taxonCode": "orcwar"},
+            {"name": "Nashville Warbler", "taxonCode": "naswar"},
+            {"name": "Connecticut Warbler", "taxonCode": "conwar"},
+            {"name": "Cape May Warbler", "taxonCode": "camwar"},
+            {"name": "Blackpoll Warbler", "taxonCode": "bkpwar"},
+            {"name": "Chestnut-Sided Warbler", "taxonCode": "chswar"},
+            {"name": "Blackburnian Warbler", "taxonCode": "bkbwar"},
+            {"name": "Prairie Warbler", "taxonCode": "prawar"},
+        ],
+    },
+
     "EE": {
         "code": "EE",
         "name": "Eastern Empids",
+        "media_filter_params": {
+            "regionCode": "US",
+        },
         "choices": [
             {"name": "Alder Flycatcher", "taxonCode": "aldfly"},
             {"name": "Willow Flycatcher", "taxonCode": "wilfly"},

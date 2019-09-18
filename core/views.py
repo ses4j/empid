@@ -14,6 +14,7 @@ from django.contrib.auth import logout
 from django.shortcuts import redirect
 
 from lazysignup.decorators import allow_lazy_user
+from lazysignup.utils import is_lazy_user
 
 from . import models as cm
 from . import constants as cc
@@ -85,8 +86,6 @@ def identify(request, group_code, bird_seq=None):
     user = request.user
     assert user is not None
 
-    template = loader.get_template("core/identify.html")
-
     last_seq = (
         cm.Bird.objects.filter(group=group_code, guess__user=user)
         .order_by("-seq")
@@ -100,9 +99,11 @@ def identify(request, group_code, bird_seq=None):
     bird_stats = get_bird_stats(bird_to_guess)
     user_stats = get_user_stats(request.user)
 
+
     context = {
         # 'bird': bird_to_guess,
         "bird_id": bird_to_guess.id,
+        "seq": bird_to_guess.seq,
         "image_url": bird_to_guess.image_url,
         "location": bird_to_guess.location_line1
         + " in "
@@ -115,12 +116,17 @@ def identify(request, group_code, bird_seq=None):
         "user_stats": user_stats,
     }
 
+    if is_lazy_user(request.user) and bird_to_guess.seq > 10:
+        context['prompt_user_to_create'] = True
+
+
     # import pprint
 
     # pprint.pprint(bird_to_guess.__dict__)
     # pprint.pprint(bird_stats)
     # pprint.pprint(user_stats)
 
+    template = loader.get_template("core/identify.html")
     return HttpResponse(template.render(context, request))
 
 
@@ -156,10 +162,9 @@ def leaderboard(request):
         last_guess_on[g.user_id] = max(g.created, last_guess_on.get(g.user_id, make_aware(datetime.datetime(2000, 1, 1))))
 
     leader_data = list(sorted(scores.items(), key=lambda x: -x[1])[:20])
-    leader_users = cm.User.objects.filter(id__in=[_[0] for _ in leader_data]).values(
-        "id", "username"
-    )
-    leader_users = {_["id"]: _["username"] for _ in leader_users}
+    leader_users = cm.User.objects.filter(id__in=[_[0] for _ in leader_data])
+    leader_users = {_.id: (_.username if not is_lazy_user(_) else f"Anonymous #{_.id}") for _ in leader_users}
+    
 
     leaderboard = []
     for user_id, score in leader_data:

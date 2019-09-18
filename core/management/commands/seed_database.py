@@ -55,7 +55,8 @@ def _seed_database(group_data):
     data = []
     for choice in group_data["choices"]:
         data += get_image_urls(species="", taxonCode=choice["taxonCode"], **group_data.get('media_filter_params', {}))
-
+    
+    random.seed(123)
     random.shuffle(data)
 
     def parse_date(obsdttm):
@@ -67,11 +68,12 @@ def _seed_database(group_data):
         max_id = 0
         for bird_data in data:
             max_id += 1
+            
             cm.Bird.objects.create(
                 asset_id=bird_data["assetId"],
                 # ebird_image_data=bird_data,
                 group=group_data["code"],
-                species_code=bird_data["speciesCode"],
+                species_code=bird_data["speciesCode"][:6],
                 seq=max_id,
                 common_name=bird_data["commonName"],
                 image_url=bird_data["largeUrl"],
